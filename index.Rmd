@@ -3,7 +3,7 @@ title: "Tarea 5"
 output: html_notebook
 ---
 # Pregunta 1
-
+ProbaNDOOO
 ```{r}
 if(!require("pacman")) install.packages("pacman")
 p_load("tidyverse", "tidyquant", "WDI", "fBasics", "gridExtra", "grid", "scales", 
