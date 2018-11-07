@@ -1,38 +1,34 @@
 ---
 title: "Tarea 5"
-output: html_notebook
+author: "Matías Astudillo, Alex den Braber y Nicolas Paris"
+date: "13-11-2018"
+output: 
+  html_document:
+    highlight: "kate"
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: true
+    code_folding: "show"
 ---
-# Pregunta 1
-ProbaNDOOO
-```{r}
-if(!require("pacman")) install.packages("pacman")
-p_load("tidyverse", "tidyquant", "WDI", "fBasics", "gridExtra", "grid", "scales", 
-       "plyr", "extrafont", "zoo")
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
+# Pregunta 1
+
+
+# Pregunta 2
 
 ```{r}
-tickers <- c("^GDAXI", "^FTSE")
-data_activos <- tq_get(tickers,
-                get = "stock.prices",
-                from = "2005-01-01",
-                to  = "2018-01-01",
-                periodicity = "monthly")
-retornos_activos <- data_activos %>%
-                    group_by(symbol) %>%
-                    tq_transmute(select = close,
-                      mutate_fun = periodReturn,
-                      period = "daily",
-                      type = "log",
-                      col_rename = "retornos.diarios")
-retornos_activos %>%
-         ggplot(mapping = aes(x = retornos.diarios, fill = symbol))+
-         geom_density(alpha = 0.5) +
-             labs(title = "Retornos Activos",
-                  subtitle = "DAX Alemania & FTSE 100 Reino Unido",
-                  x = "Retornos mensuales", y = "Densidad") +
-         theme_tq() +
-         scale_fill_tq() +
-         facet_wrap(~ symbol, ncol = 2) +
-         guides(fill=guide_legend(title="Activos:"))
+
 ```
+
+# Pregunta 3
+```{r}
+
+```
+
 
