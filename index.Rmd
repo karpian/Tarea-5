@@ -1,18 +1,38 @@
 ---
-title: "R Notebook"
+title: "Tarea 5"
 output: html_notebook
 ---
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+# Pregunta 1
 
 ```{r}
-plot(cars)
+if(!require("pacman")) install.packages("pacman")
+p_load("tidyverse", "tidyquant", "WDI", "fBasics", "gridExtra", "grid", "scales", 
+       "plyr", "extrafont", "zoo")
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+```{r}
+tickers <- c("^GDAXI", "^FTSE")
+data_activos <- tq_get(tickers,
+                get = "stock.prices",
+                from = "2005-01-01",
+                to  = "2018-01-01",
+                periodicity = "monthly")
+retornos_activos <- data_activos %>%
+                    group_by(symbol) %>%
+                    tq_transmute(select = close,
+                      mutate_fun = periodReturn,
+                      period = "daily",
+                      type = "log",
+                      col_rename = "retornos.diarios")
+retornos_activos %>%
+         ggplot(mapping = aes(x = retornos.diarios, fill = symbol))+
+         geom_density(alpha = 0.5) +
+             labs(title = "Retornos Activos",
+                  subtitle = "DAX Alemania & FTSE 100 Reino Unido",
+                  x = "Retornos mensuales", y = "Densidad") +
+         theme_tq() +
+         scale_fill_tq() +
+         facet_wrap(~ symbol, ncol = 2) +
+         guides(fill=guide_legend(title="Activos:"))
+```
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
