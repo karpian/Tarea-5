@@ -17,9 +17,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-# Pregunta 1
-
-
 # Pregunta 2
 
 ```{r}
