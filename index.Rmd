@@ -185,18 +185,20 @@ finance(data_activos,"yes","type 1","no")
 Dado que se explicita que el modelo real va depender de dos variables, especificarlo solo con una variable explicativa necesariamente producirá una endogeneidad, por variable omitida relevante (VOR). Este problema se va a podrudcir ya que no se cumple el criterio de $E(\epsilon,X_i)\neq 0$. La implicancia de este problema es que el estimador MCO ya no podra considerarse MELI, debido a que estará sesgado y será incosistente. Esto puede ser demostrado matemáticamente.
  
 $$
-\hat{\beta}_1={({X_1}'X_1)}^{-1}{X_1}'(X_1\beta_1+X_2\beta_2+\varepsilon)
+\hat{\beta}_1={({X_1}'{X_1)}}^{-1}{X_1}'(X_1\beta_1+X_2\beta_2+\varepsilon)
 $$ 
   
 $$
-\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2 + {({X_1}'X_1)}^{-1}{X_1}'+\varepsilon\setminus E()
+\beta_1 + {({X_1}'{X_1)}}^{-1}{X_1}'X_2\beta_2 + {({X_1}'X_1)}^{-1}{X_1}'+\varepsilon\setminus E()
 $$ 
   
 $$
-\beta_1 + \underbrace{{({X_1}'X_1)}^{-1}{X_1}'X_2}_{\hat{\gamma } \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 
-$$  
+\beta_1 + \underbrace{{({X_1}'{X_1})}^{-1}{X_1}'{X_2}}_{\hat{\gamma} \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 
 $$
-\left . \begin{matrix}
+
+$$
+\left .
+\begin{matrix}
          \beta_2\Rightarrow corr(Y,X_2)\Rightarrow Direcci\acute{o}n  \\
          \hat{\gamma}\Rightarrow corr(X_1,X_2)\Rightarrow Direcci\acute{o}n 
          {} 
@@ -204,7 +206,8 @@ $$
    \right \} Magnitud
 $$
 $$
-\left . \begin{matrix} 
+\left.
+\begin{matrix} 
          \hat{\beta_2}>0\\
          \hat{\gamma}>0 
          {} 
@@ -212,12 +215,15 @@ $$
    \right \} Sobreestimado
 $$
 $$
-\left . \begin{matrix} 
+\left .
+\begin{matrix} 
          \hat{\beta_2}<0\\
           \hat{\gamma}<0
          {} 
-      \end{matrix}
-   \right \} Sobreestimado
+\end{matrix}
+   \right 
+   \} 
+   Sobreestimado
 $$
    
   En la medida que ambos signos sean $\neq$  se estará subestimando la magnitud del efecto. Además los estimadores no serán consistentes, es decir que independiente que se aumente la muestra, los valores no convergeran al valor real. Para poder comprobar esta propiedad, podemos evaluar las esperanzas de ambos modelos, sopensado para cada tamaño muestral. Lo que deberíamos esperar del modelo correcto es que a medida que se aumente la muestra el valor sea cercano al valor poblacional. Respecto al modelo incorrecto, se espera que a medida que aumente la muestra se tienda a un valor de $\beta_1$ equivocado, el cual permitirá medir la magnitud del sesgo.
