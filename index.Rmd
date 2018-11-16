@@ -193,7 +193,7 @@ $$
 $$ 
   
 $$
-\beta_1 + \underbrace{{({X_1}'{X_1})}^{-1}{X_1}'{X_2}}_{\hat{\gamma} \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 
+\beta_1 + \underbrace{ {({X_1}'{X_1})}^{-1}{X_1}'{X_2} }_{\hat{\gamma} \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2
 $$
 
 $$
