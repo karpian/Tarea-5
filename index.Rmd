@@ -184,26 +184,35 @@ finance(data_activos,"yes","type 1","no")
 
 Dado que se explicita que el modelo real va depender de dos variables, especificarlo solo con una variable explicativa necesariamente producirá una endogeneidad, por variable omitida relevante (VOR). Este problema se va a podrudcir ya que no se cumple el criterio de $E(\epsilon,X_i)\neq 0$. La implicancia de este problema es que el estimador MCO ya no podra considerarse MELI, debido a que estará sesgado y será incosistente. Esto puede ser demostrado matemáticamente.
  
-  $$\hat{\beta}_1={({X_1}'X_1)}^{-1}{X_1}'(X_1\beta_1+X_2\beta_2+\varepsilon)$$ 
+$$
+\hat{\beta}_1={({X_1}'X_1)}^{-1}{X_1}'(X_1\beta_1+X_2\beta_2+\varepsilon)
+$$ 
   
-  $$\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2 + {({X_1}'X_1)}^{-1}{X_1}'+\varepsilon\setminus E()$$ 
+$$
+\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2 + {({X_1}'X_1)}^{-1}{X_1}'+\varepsilon\setminus E()
+$$ 
   
-  $$\beta_1 + \underbrace{{({X_1}'X_1)}^{-1}{X_1}'X_2}_{\hat{\gamma } \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 $$  
-$$ \left . \begin{matrix}
+$$
+\beta_1 + \underbrace{{({X_1}'X_1)}^{-1}{X_1}'X_2}_{\hat{\gamma } \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 
+$$  
+$$
+\left . \begin{matrix}
          \beta_2\Rightarrow corr(Y,X_2)\Rightarrow Direcci\acute{o}n  \\
          \hat{\gamma}\Rightarrow corr(X_1,X_2)\Rightarrow Direcci\acute{o}n 
          {} 
       \end{matrix}
    \right \} Magnitud
 $$
-$$\left . \begin{matrix} 
+$$
+\left . \begin{matrix} 
          \hat{\beta_2}>0\\
          \hat{\gamma}>0 
          {} 
       \end{matrix}
    \right \} Sobreestimado
 $$
-$$\left . \begin{matrix} 
+$$
+\left . \begin{matrix} 
          \hat{\beta_2}<0\\
           \hat{\gamma}<0
          {} 
@@ -276,7 +285,7 @@ apply(betas1_df, 2, var)
   
 Si analizamos las columnas N_b1_M1C se puede comprobar que a medida que se aumenta la cantidad de datos, el valor de $\beta_1$ tiende a su valor poblacional $2,5$. Este proceso también se produce para $\beta_0$, el cual tiende a $2$. Es importante advertir que a medida que aumenta la cantidad de datos la varianza se hace cada vez pequeña, implicando un estimdor mas eficiente y más cercano a su valor poblacional.
 
-Ahora cuando se analiza el modelo incorrecto, se debe observar las columnas N_b1_M1I. En este caso los valores tienden a un valor, pero sin embargo este no concuerda con el valor definido del modelo. Para este caso, la varianza también tiende a 0, pero el valor del coefieciente $\beta_1$ se desvía de su valor poblacional. Es importante notar que a medida que aumenta la muestra, el valor tenderá a $\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2$, lo que se puede aproximar a $2.5+ 0.7=3.2$, donde 0,7 envetualmente se aproximará a 0.8 q se obtiene al resolver el valor de $\hat{\beta_1}$
+Ahora cuando se analiza el modelo incorrecto, se debe observar las columnas N_b1_M1I. En este caso los valores tienden a un valor, pero sin embargo este no concuerda con el valor definido del modelo. Para este caso, la varianza también tiende a 0, pero el valor del coefieciente $\beta_1$ se desvía de su valor poblacional. Es importante notar que a medida que aumenta la muestra, el valor tenderá a $\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2$, lo que se puede aproximar a 2.5+ 0.7=3.2, donde 0,7 envetualmente se aproximará a 0.8 q se obtiene al resolver el valor de $\hat{\beta_1}$
 
 ## Parte b{-}
 ### Graficos
