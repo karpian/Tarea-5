@@ -1,9 +1,10 @@
 ---
 title: "Tarea 5"
 author: "Matías Astudillo, Alex den Braber y Nicolas Paris"
-date: "13-11-2018"
-output: 
-  html_document:
+date: "16-11-2018"
+linkcolor: "red"
+output:
+   html_document:
     highlight: "kate"
     toc: true
     toc_depth: 2
@@ -16,16 +17,441 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+if(!require("pacman")) install.packages("pacman")
+p_load("tidyverse",'gridExtra','ggthemes','lubridate','forcats','ggplot2','pdfetch','tidyquant')
 ```
-# Pregunta 2
+# Pregunta 2{.tabset - .tabset-fade}
+
+## Base{-}
+```{r}
+tickers <- c("MSFT","AAPL")
+data_activos <- tq_get(tickers,
+                       get = "stock.prices",
+                       from = "2000-01-01",
+                       to  = "2018-08-30",
+                       periodicity = "monthly")
+```
+
+## Función{-}
+```{r}
+finance = function(x,return=c('yes','no'),plot=c('type 1','type 2'),normal=c('yes','no')){
+  r = "Solo puede ser yes o no entre comillas"
+  fplot = "Solo existen dos tipo de formato, type 1 que corresponde a retornos, type 2 que corresponde a retornos acumulados. Favor ingresa el tipo entre comillas"
+  
+  #Para retornos logaritmicos
+  if (return=='yes'){
+    #Retornos 
+    retornos_activos_log <- x %>%
+      group_by(symbol) %>%
+      tq_transmute(select = close,
+                   mutate_fun = periodReturn,
+                   period = "monthly",
+                   type = "log",
+                   col_rename = "retornos.diarios")
+    
+    #Graficos
+    ifelse(plot=='type 1',
+           (g11 <- retornos_activos_log %>%
+              ggplot(mapping = aes(x = retornos.diarios, fill = symbol))+
+              geom_density(alpha = 0.5) +
+              labs(title = "Retornos Activos",
+                   subtitle = "Apple & Microsoft",
+                   x = "Retornos mensuales", y = "Densidad") +
+              theme_tq() +
+              scale_fill_tq() +
+              facet_wrap(~ symbol, ncol = 2) +
+              guides(fill=guide_legend(title="Activos:"))),
+           ifelse(plot=='type 2',
+                  (g12 <- retornos_activos_log %>%
+                     group_by(symbol) %>%
+                     mutate(ret.cum = cumsum(retornos.diarios))  %>%
+                     ggplot(mapping = aes(x = date, y = ret.cum/100, color = symbol)) +
+                     geom_line() +
+                     labs(title = "Retornos Activos",
+                          subtitle = "Apple & Microsoft",
+                          x = "Periodo", y = "Retorno Acumulado") +
+                     theme_tq() +
+                     scale_fill_tq() +
+                     facet_wrap(~ symbol, ncol = 2) +
+                     guides(color = guide_legend(title="Activos:")) +
+                     scale_y_continuous(labels = scales::percent))
+                  ,fplot))
+    
+    #Test Normalidad
+    if(normal=='yes'){
+      j_log = by(retornos_activos_log,retornos_activos_log$symbol,
+                 function(x){
+                   n=length(x$retornos.diarios)
+                   mean = sum(x$retornos.diarios)/n
+                   skewness = ((sum(x$retornos.diarios-mean)^3)/n)/((sum(x$retornos.diarios-mean)^2)/n)^(3/2)
+                   kurtosis = ((sum(x$retornos.diarios-mean)^4)/n)/((sum(x$retornos.diarios-mean)^2)/n)^2
+                   JB = n*(((skewness^2)/6)+(((kurtosis-3)^2)/24))
+                   j = paste('p-value =',1 - pchisq(JB,df = 2),ifelse(1 - pchisq(JB,df = 2)<0.05,
+                                                                      ', entonces rechazamos la hipotesis nula de normalidad',
+                                                                      ', entonces no rechazamos  la hipotesis nula de normalidad'))
+                   
+                 }
+      )
+    }
+  }
+  
+  #Para retornos atirmeticos
+  else if (return=='no'){
+    
+    #Retornos
+    retornos_activos_arit <- x %>%
+      group_by(symbol) %>%
+      tq_transmute(select = close,
+                   mutate_fun = periodReturn,
+                   period = "monthly",
+                   type = "arithmetic",
+                   col_rename = "retornos.diarios")
+    
+    #Graficos
+    ifelse(plot=='type 1',
+           (g21 <- retornos_activos_arit %>%
+              ggplot(mapping = aes(x = retornos.diarios, fill = symbol))+
+              geom_density(alpha = 0.5) +
+              labs(title = "Retornos Activos",
+                   subtitle = "Apple & Microsoft",
+                   x = "Retornos mensuales", y = "Densidad") +
+              theme_tq() +
+              scale_fill_tq() +
+              facet_wrap(~ symbol, ncol = 2) +
+              guides(fill=guide_legend(title="Activos:"))),
+           ifelse(plot=='type 2',
+                  (g22 <- retornos_activos_arit %>%
+                     group_by(symbol) %>%
+                     mutate(ret.cum = cumsum(retornos.diarios))  %>%
+                     ggplot(mapping = aes(x = date, y = ret.cum/100, color = symbol)) +
+                     geom_line() +
+                     labs(title = "Retornos Activos",
+                          subtitle = "Apple & Microsoft",
+                          x = "Periodo", y = "Retorno Acumulado") +
+                     theme_tq() +
+                     scale_fill_tq() +
+                     facet_wrap(~ symbol, ncol = 2) +
+                     guides(color = guide_legend(title="Activos:")) +
+                     scale_y_continuous(labels = scales::percent))
+                  ,fplot))
+    
+    #Test Normalidad
+    if (normal=='yes'){
+      j_arit= by(retornos_activos_arit,retornos_activos_arit$symbol,
+                 function(x){
+                   n=length(x$retornos.diarios)
+                   mean = sum(x$retornos.diarios)/n
+                   skewness = ((sum(x$retornos.diarios-mean)^3)/n)/((sum(x$retornos.diarios-mean)^2)/n)^(3/2)
+                   kurtosis = ((sum(x$retornos.diarios-mean)^4)/n)/((sum(x$retornos.diarios-mean)^2)/n)^2
+                   JB = n*(((skewness^2)/6)+(((kurtosis-3)^2)/24))
+                   j = paste('p-value =',1 - pchisq(JB,df = 2),ifelse(1 - pchisq(JB,df = 2)<0.05,
+                                                                      ', entonces rechazamos la hipotesis nula de normalidad',
+                                                                      ', entonces no rechazamos  la hipotesis nula de normalidad'))
+                   
+                 }
+      )
+    }
+  }
+
+  n="No realiza Test de Normalidad"
+  #return
+  
+  ifelse(return=="yes"& plot=='type 1' & normal=="yes",return(list(g11,j_log)),
+         ifelse(return=='yes' & plot=='type 2' & normal=="yes",return(list(g12,j_log)),
+                ifelse(return=='yes' & plot=='type 1' & normal=="no",return(list(g11,n)),
+                       ifelse(return=='yes' & plot=='type 2' & normal=="no",return(list(g12,n)),
+                              ifelse(return=='no' & plot=='type 1' & normal=="yes",return(list(g21,j_arit)),
+                                     ifelse(return=='no' & plot=='type 2' & normal=="yes",return(list(g22,j_arit)),
+                                            ifelse(return=='no' & plot=='type 1' & normal=="no",return(list(g21,n)),
+                                                   ifelse(return=='no' & plot=='type 2' & normal=="no",return(list(g22,n)),"Algo esta mal"))))))
+                
+         ))
+}
+```
+
+## Pruebas{-}
+```{r}
+finance(data_activos,"yes","type 1","yes")
+
+finance(data_activos,"yes","type 1","no")
+
+```
+
+# Pregunta 3{.tabset - .tabset-fade}
+
+## Parte a{-}
+
+Dado que se explicita que el modelo real va depender de dos variables, especificarlo solo con una variable explicativa necesariamente producirá una endogeneidad, por variable omitida relevante (VOR). Este problema se va a podrudcir ya que no se cumple el criterio de $E(\epsilon,X_i)\neq 0$. La implicancia de este problema es que el estimador MCO ya no podra considerarse MELI, debido a que estará sesgado y será incosistente. Esto puede ser demostrado matemáticamente.
+ 
+  $$\hat{\beta}_1={({X_1}'X_1)}^{-1}{X_1}'(X_1\beta_1+X_2\beta_2+\varepsilon)$$ 
+  
+  $$\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2 + {({X_1}'X_1)}^{-1}{X_1}'+\varepsilon\setminus E()$$ 
+  
+  $$\beta_1 + \underbrace{{({X_1}'X_1)}^{-1}{X_1}'X_2}_{\hat{\gamma } \Rightarrow Sesgo=corr(X_2,X_1)}\beta_2 \neq \beta_1 +\beta_2 $$  
+$$ \left . \begin{matrix}
+         \beta_2\Rightarrow corr(Y,X_2)\Rightarrow Direcci\acute{o}n  \\
+         \hat{\gamma}\Rightarrow corr(X_1,X_2)\Rightarrow Direcci\acute{o}n 
+         {} 
+      \end{matrix}
+   \right \} Magnitud
+$$
+$$\left . \begin{matrix} 
+         \hat{\beta_2}>0\\
+         \hat{\gamma}>0 
+         {} 
+      \end{matrix}
+   \right \} Sobreestimado
+$$
+$$\left . \begin{matrix} 
+         \hat{\beta_2}<0\\
+          \hat{\gamma}<0
+         {} 
+      \end{matrix}
+   \right \} Sobreestimado
+$$
+   
+  En la medida que ambos signos sean $\neq$  se estará subestimando la magnitud del efecto. Además los estimadores no serán consistentes, es decir que independiente que se aumente la muestra, los valores no convergeran al valor real. Para poder comprobar esta propiedad, podemos evaluar las esperanzas de ambos modelos, sopensado para cada tamaño muestral. Lo que deberíamos esperar del modelo correcto es que a medida que se aumente la muestra el valor sea cercano al valor poblacional. Respecto al modelo incorrecto, se espera que a medida que aumente la muestra se tienda a un valor de $\beta_1$ equivocado, el cual permitirá medir la magnitud del sesgo.
 
 ```{r}
+set.seed(123)
+reps=10000
+betas1=matrix(NA, nrow= reps, ncol=16)
+betas2=matrix(NA, nrow= reps, ncol=16)
+beta0=2
+beta1=2.5
+beta2=1
+su=1
+n = c(50, 100, 500, 1000) #Tamaño Muestral
+for(j in 1:length(n)) {
+x1=rnorm(n[j],20,1)
+x21=(0.8*x1)+rnorm(n[j],0,1)
+x22=runif(n[j],0,1)
+
+for(i in 1:reps){
+u=rnorm(n[j],0,su)
+v1= (beta2*x21)+ u
+v2= (beta2*x22)+ u
+
+Y0=beta0+beta1*x1 + v1
+Y1=beta0 + beta1*x1 + beta2*x21 + u
+Y02=beta0+beta1*x1 + v2
+Y12=beta0 + beta1*x1 + beta2*x22 + u
+model0= lm(Y0~x1)
+betas1[i,j] =model0$coef[1] #beta0 modelo sesgado
+betas1[i,j+4] =model0$coef[2] #beta1 modelo sesgado
+model1= lm(Y1~x1 +x21)
+betas1[i,j+8] = model1$coef[1] #beta0 modelo correcto
+betas1[i,j+12] = model1$coef[2] #beta1 modelo correcto
+
+model02= lm(Y02~x1)
+betas2[i,j] =model02$coef[1] #beta0 modelo sesgado
+betas2[i,j+ 4] =model02$coef[2] #beta1 modelo sesgado
+model12= lm(Y12~x1 +x22)
+betas2[i,j+8] = model12$coef[1] #beta0 modelo correcto
+betas2[i,j+12] = model12$coef[2] #beta1 modelo correcto
+
+}
+}
+colnames(betas1) = c("50_b0_M1I", "100_b0_M1I", "500_b0_M1I", "1000_b0_M1I",
+                    "50_b1_M1I", "100_b1_M1I", "500_b1_M1I", "1000_b1_M1I",
+                    "50_b0_M1C", "100_b0_M1C", "500_b0_M1C", "1000_b0_M1C",
+                    "50_b1_M1C", "100_b1_M1C", "500_b1_M1C", "1000_b1_M1C")
+  
+colnames(betas2) = c("50_b0_M2I", "100_b0_M2I", "500_b0_M2I", "1000_b0_M2I",
+                    "50_b1_M2I", "100_b1_M2I", "500_b1_M2I", "1000_b1_M2I",
+                    "50_b0_M2C", "100_b0_M2C", "500_b0_M2C", "1000_b0_M2C",
+                    "50_b1_M2C", "100_b1_M2C", "500_b1_M2C", "1000_b1_M2C")
+
+#Nombrando las columnas
+
+betas1_df = data.frame(betas1)
+betas2_df = data.frame(betas2)
+
+#Varianza y Media
+apply(betas1_df, 2, mean)
+apply(betas1_df, 2, var)
 
 ```
+  
+Si analizamos las columnas N_b1_M1C se puede comprobar que a medida que se aumenta la cantidad de datos, el valor de $\beta_1$ tiende a su valor poblacional $2,5$. Este proceso también se produce para $\beta_0$, el cual tiende a $2$. Es importante advertir que a medida que aumenta la cantidad de datos la varianza se hace cada vez pequeña, implicando un estimdor mas eficiente y más cercano a su valor poblacional.
 
-# Pregunta 3
+Ahora cuando se analiza el modelo incorrecto, se debe observar las columnas N_b1_M1I. En este caso los valores tienden a un valor, pero sin embargo este no concuerda con el valor definido del modelo. Para este caso, la varianza también tiende a 0, pero el valor del coefieciente $\beta_1$ se desvía de su valor poblacional. Es importante notar que a medida que aumenta la muestra, el valor tenderá a $\beta_1 + {({X_1}'X_1)}^{-1}{X_1}'X_2\beta_2$, lo que se puede aproximar a $2.5+ 0.7=3.2$, donde 0,7 envetualmente se aproximará a 0.8 q se obtiene al resolver el valor de $\hat{\beta_1}$
+
+## Parte b{-}
+### Graficos
+
+```{r message=FALSE, warning=FALSE}
+g1_1=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,5],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,5]), sd=sd(betas1_df[,5])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=50") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g1_2=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,13],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,13]), sd=sd(betas1_df[,13])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=50") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g1=grid.arrange(g1_1, g1_2, ncol=1)
+
+g2_1=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,6],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,6]), sd=sd(betas1_df[,6])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=100") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g2_2=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,14],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,14]), sd=sd(betas1_df[,14])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=100") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g2= grid.arrange(g2_1, g2_2, ncol=1)
+
+g3_1=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,7],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,7]), sd=sd(betas1_df[,7])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=500") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g3_2=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,15],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,15]), sd=sd(betas1_df[,15])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=500") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g3= grid.arrange(g3_1, g3_2, ncol=1)
+
+g4_1=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,16],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,16]), sd=sd(betas1_df[,16])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=1000") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+
+g4_2=ggplot(betas1_df) + 
+  geom_histogram(aes(betas1_df[,16],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,16]), sd=sd(betas1_df[,16])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=1000") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+g4= grid.arrange(g4_1, g4_2, ncol=1)
+
+grid.arrange(g1, g2, g3, g4, ncol=2)
+```
+A partir de los graficos es posible advertir como los valores muestrales, comienzan a centrarse en su esperanza o valor poblacional. Sin embargo para el caso del "Modelo Incorrecto" se tiende a un $\hat{beta_1}$ equivocado, con esto podemos ratificar el no cumplimiento de la consistencia de los estimadores.
+
+## Parte c{-}
+### Varianza y Media
+
+```{r}
+apply(betas2_df, 2, mean)
+apply(betas2_df, 2, var)
+```
+En esta oprtunidad se cambia la distribución de la variable $X_2$, la cual se distribuye $U\sim(0,1)$. En este caso, tanto el modelo correcto como incorrecto convergen al valor poblacional de $\hat{\beta}$. Respecto a las varianzas, para el modelo incorrecto estas serán iguales, en cambio en el caso del modelo correcto serán semejantes. En ambos casos son descendentes y cuando $n \to \infty$, estas serán 0.
+
+### Graficos
 ```{r}
 
+g5_1=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,5],y=..density..), col="black", bins =30,  binwidth = 0.05) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,5]), sd=sd(betas2_df[,5])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=50") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g5_1= g5_1 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,5]), sd=sd(betas1_df[,5])),
+                      geom = "line", color="green", size=1)
+g5_2=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,13],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,13]), sd=sd(betas2_df[,13])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=50") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g5_2= g5_2+ stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,13]), sd=sd(betas1_df[,13])),
+                          geom = "line", color="green", size=1)
+
+g5= grid.arrange(g5_1, g5_2, ncol=1)
+
+g6_1=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,6],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,6]), sd=sd(betas2_df[,6])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=100") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g6_1= g6_1 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,6]), sd=sd(betas1_df[,6])),
+                            geom = "line", color="green", size=1)
+
+g6_2=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,14],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,14]), sd=sd(betas2_df[,14])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=100") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g6_2= g6_2 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,14]), sd=sd(betas1_df[,14])),
+                            geom = "line", color="green", size=1)
+
+
+g6= grid.arrange(g6_1, g6_2, ncol=1)
+
+g7_1=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,7],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,7]), sd=sd(betas2_df[,7])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=500") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g7_1= g7_1 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,7]), sd=sd(betas1_df[,7])),
+                            geom = "line", color="green", size=1)
+
+g7_2=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,15],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,15]), sd=sd(betas2_df[,15])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=500") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g7_2= g7_2 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,15]), sd=sd(betas1_df[,15])),
+                            geom = "line", color="green", size=1)
+
+g7= grid.arrange(g7_1, g7_2, ncol=1)
+
+
+g8_1=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,8],y=..density..), col="black", bins = 30,  binwidth = 0.05) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,8]), sd=sd(betas2_df[,8])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Incorrecto, n=1000") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+g8_1= g8_1 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,8]), sd=sd(betas1_df[,8])),
+                            geom = "line", color="green", size=1)
+
+g8_2=ggplot(betas2_df) + 
+  geom_histogram(aes(betas2_df[,16],y=..density..), col="black", bins = 30) +
+  stat_function(fun = dnorm, args = list(mean=mean(betas2_df[,16]), sd=sd(betas2_df[,16])),
+                geom = "line", color="red", size=1) +
+  ylab("Densidad") + ggtitle("Modelo Correcto, n=1000") +xlab(expression(hat(beta)[1])) +
+  theme_bw()
+
+g8_2 = g8_2 +  stat_function(fun = dnorm, args = list(mean=mean(betas1_df[,16]), sd=sd(betas1_df[,16])),
+                             geom = "line", color="green", size=1)
+
+g8= grid.arrange(g8_1, g8_2, ncol=1)
+
+grid.arrange(g5, g6, g7, g8, ncol=2)
+
 ```
-
-
+  
+Se grafico cada distribución incluyendo la linea verde, que representa la distribución para el caso 1. Como se señalo en la pregunta anterior en ambos casos (modelo correcto e incorrecto) convergen al valor poblacional y además lo hacen mas rapido. Para el caso del modelo incorrecto (*sesgado*) del Caso 1 nunca se converge al valor promedio de modo que en las figuras solo vemos las colas inferiores de la distribución. Para el caso del modelo correcto se advierte que la distribución utilizando el Caso 2, tiene una menor varianza que además disminuye de manera mucho mas vertiginosa, pero que sin embargo cuando $n \to \infty$ estas se deberían igualar. Finalmente llama la atención que la distribución para el caso en que N=1000 en el modelo incorrecto, si bien utilizan se obtiene la misma varianza estos se comienzan a concentrar en un menor numero de rangos. Esto se aprecia mediante el numero de barras que tiene el último histograma, que pasa de más de 20 barras a tan solo 3.
