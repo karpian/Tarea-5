@@ -7,6 +7,7 @@ output:
    html_document:
     highlight: "kate"
     toc: true
+    css: styles.css
     toc_depth: 2
     toc_float:
       collapsed: false
